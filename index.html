@@ -843,16 +843,20 @@ async function laadIncidenten() {
 window.addEventListener('load', async () => {
   await msalClient.initialize();
   const resp = await msalClient.handleRedirectPromise();
-  if (resp) { token = resp.accessToken; initApp(resp.account); }
-  else {
-    const accs = msalClient.getAllAccounts();
-    if (accs.length) {
-      try {
-        const t = await msalClient.acquireTokenSilent({ scopes:['Sites.ReadWrite.All','Mail.Send'], account:accs[0] });
-        token = t.accessToken; initApp(accs[0]);
-      } catch(e) {}
-    }
+  if (resp) { token = resp.accessToken; window._appBooted = true; initApp(resp.account); return; }
+  const accs = msalClient.getAllAccounts();
+  if (accs.length) {
+    try {
+      const t = await msalClient.acquireTokenSilent({ scopes:['Sites.ReadWrite.All','Mail.Send'], account:accs[0] });
+      token = t.accessToken; window._appBooted = true; initApp(accs[0]); return;
+    } catch(e) {}
   }
+  // Geen eigen sessie — wacht op portaaltoken als in iframe
+  if (window.self !== window.top) {
+    // Token receiver zal login() aanroepen wanneer token aankomt
+    return;
+  }
+  // Standalone: toon aanmeldscherm (login() via knop)
 });
 </script>
 </body>
