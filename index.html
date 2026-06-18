@@ -479,6 +479,23 @@ async function login() {
       token = t.accessToken; initApp(accs[0]); return;
     } catch(e) {}
   }
+  // In iframe: wacht op portal token ipv redirect
+  if (window.self !== window.top) {
+    if (window._portalToken) {
+      token = window._portalToken;
+      window._appBooted = true;
+      initApp({ username: window._portalEmail || '', name: window._portalEmail || '' });
+      return;
+    }
+    await new Promise(r => setTimeout(r, 2000));
+    if (window._portalToken) {
+      token = window._portalToken;
+      window._appBooted = true;
+      initApp({ username: window._portalEmail || '', name: window._portalEmail || '' });
+      return;
+    }
+    return; // Geen redirect vanuit iframe
+  }
   await msalClient.loginRedirect({ scopes:['Sites.ReadWrite.All','Mail.Send'] });
 }
 
