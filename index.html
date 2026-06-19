@@ -128,6 +128,31 @@ tr:last-child td{border-bottom:none}tr:hover td{background:var(--blauw-bg)}
 .login-t{font-size:18px;font-weight:600;color:var(--blauw);margin-bottom:4px}
 .login-s{font-size:12px;color:var(--muted);margin-bottom:20px;line-height:1.5}
 .login-scholen{font-size:11px;color:#aab;margin-bottom:16px;line-height:1.6}
+
+/* ── HELP DRAWER ─────────────────────────────────────── */
+.help-overlay{position:fixed;inset:0;background:rgba(0,0,0,.35);z-index:9000;opacity:0;pointer-events:none;transition:opacity .25s}
+.help-overlay.on{opacity:1;pointer-events:all}
+.help-drawer{position:fixed;top:0;right:0;bottom:0;width:min(420px,100vw);background:white;z-index:9001;transform:translateX(100%);transition:transform .3s cubic-bezier(.4,0,.2,1);display:flex;flex-direction:column;box-shadow:-4px 0 24px rgba(0,0,0,.15)}
+.help-drawer.on{transform:translateX(0)}
+.help-hdr{color:white;padding:1rem 1.25rem;display:flex;align-items:center;justify-content:space-between;flex-shrink:0}
+.help-hdr h2{font-size:15px;font-weight:700;margin:0;display:flex;align-items:center;gap:8px}
+.help-close{background:rgba(255,255,255,.2);border:none;border-radius:8px;color:white;width:32px;height:32px;cursor:pointer;display:flex;align-items:center;justify-content:center;font-size:18px;transition:background .15s;flex-shrink:0}
+.help-close:hover{background:rgba(255,255,255,.35)}
+.help-nav{display:flex;border-bottom:1px solid #E8E5DC;flex-shrink:0;overflow-x:auto}
+.help-tab{padding:10px 14px;font-size:12px;font-weight:600;color:#888;cursor:pointer;border-bottom:2px solid transparent;white-space:nowrap;background:none;border-top:none;border-left:none;border-right:none;font-family:inherit;transition:all .15s}
+.help-tab:hover{color:#333}
+.help-body{flex:1;overflow-y:auto;padding:1.25rem}
+.help-section{display:none}.help-section.active{display:block}
+.help-section h3{font-size:14px;font-weight:700;margin:0 0 .5rem;display:flex;align-items:center;gap:6px}
+.help-section h4{font-size:11px;font-weight:700;color:#555;margin:.9rem 0 .3rem;text-transform:uppercase;letter-spacing:.04em}
+.help-section p{font-size:13px;color:#444;line-height:1.65;margin:0 0 .75rem}
+.help-section ul{margin:.25rem 0 .75rem;padding-left:1.25rem}
+.help-section li{font-size:13px;color:#444;line-height:1.65;margin-bottom:.25rem}
+.help-tip{border-left:3px solid #888;border-radius:0 8px 8px 0;padding:.6rem .85rem;margin:.75rem 0;font-size:12px;line-height:1.55;background:#F8F7F4;color:#444}
+.help-step{display:flex;gap:.75rem;margin-bottom:.6rem}
+.help-step-nr{flex-shrink:0;width:22px;height:22px;color:white;border-radius:50%;display:flex;align-items:center;justify-content:center;font-size:11px;font-weight:700;margin-top:2px;background:#888}
+.help-step-txt{font-size:13px;color:#444;line-height:1.6}
+.help-footer{padding:.75rem 1.25rem;border-top:1px solid #E8E5DC;font-size:11px;color:#AAA;flex-shrink:0;text-align:center}
 </style>
 <script>
 window._portalToken = null;
@@ -181,14 +206,14 @@ window.addEventListener('message', function(event) {
       <option value="ko">Kouterschool</option>
       <option value="te">School Ter Elst</option>
     </select>
-    <button class="btn btn-sm" style="width:100%;justify-content:center;margin-top:4px" onclick="logout()">Afmelden</button>
+    
   </div>
 </nav>
 
 <div class="main">
   <div class="topbar">
     <div class="tb-l"><span class="tb-t" id="tb-t">Snelle aangifte</span><span class="badge b-blue" id="tb-b">melding</span></div>
-    <div style="display:flex;gap:7px"><button class="btn btn-sm btn-p" onclick="show('aangifte')">+ Nieuwe melding</button></div>
+    <div style="display:flex;gap:7px;align-items:center"><button class="btn btn-sm btn-p" onclick="show('aangifte')">+ Nieuwe melding</button><button onclick="openHelp()" title="Help" style="background:rgba(255,255,255,.15);border:none;border-radius:8px;color:white;width:34px;height:34px;cursor:pointer;display:inline-flex;align-items:center;justify-content:center;font-size:17px;flex-shrink:0;" aria-label="Help">&#63;</button></div>
   </div>
   <div class="content">
 
@@ -515,7 +540,6 @@ function initApp(acc) {
   if (ad) ad.value = new Date().toISOString().slice(0,10);
 }
 
-function logout() { msalClient.logout(); }
 function schoolNaam(s) { const x=CFG.scholen.find(c=>c.sleutel===s); return x?x.naam:s; }
 function changeSchool(s) { huidigSchool=s; document.getElementById('i-school').textContent=schoolNaam(s); }
 
@@ -858,6 +882,75 @@ window.addEventListener('load', async () => {
   }
   // Standalone: toon aanmeldscherm (login() via knop)
 });
+
+function openHelp(){
+  document.getElementById('helpOverlay').classList.add('on');
+  document.getElementById('helpDrawer').classList.add('on');
+  document.body.style.overflow='hidden';
+}
+function closeHelp(){
+  document.getElementById('helpOverlay').classList.remove('on');
+  document.getElementById('helpDrawer').classList.remove('on');
+  document.body.style.overflow='';
+}
+function showHelpTab(id,btn){
+  document.querySelectorAll('.help-section').forEach(s=>s.classList.remove('active'));
+  document.querySelectorAll('.help-tab').forEach(t=>t.classList.remove('active'));
+  document.getElementById('help-'+id).classList.add('active');
+  btn.classList.add('active');
+}
+document.addEventListener('keydown',function(e){if(e.key==='Escape')closeHelp();});
+
 </script>
+
+<!-- HELP DRAWER -->
+<div class="help-overlay" id="helpOverlay" onclick="closeHelp()"></div>
+<div class="help-drawer" id="helpDrawer">
+  <div class="help-hdr" style="background:#1F4E79">
+    <h2>&#9432; Help &mdash; Meldpunt</h2>
+    <button class="help-close" onclick="closeHelp()">&#x2715;</button>
+  </div>
+  <div class="help-nav"><button class="help-tab  active" onclick="showHelpTab('algemeen',this)">Algemeen</button><button class="help-tab" onclick="showHelpTab('aangifte',this)">Aangifte</button><button class="help-tab" onclick="showHelpTab('modules',this)">Modules</button><button class="help-tab" onclick="showHelpTab('beheer',this)">Beheer</button></div>
+  <div class="help-body"><div class="help-section  active" id="help-algemeen">
+      <h3 style="color:#1A6B4A">&#8505; Over het Meldpunt</h3>
+      <p>Het <strong>Meldpunt</strong> is het digitale loket voor veiligheids- en welzijnsincidenten op school. Je meldt een incident snel en anoniem — zonder apart wachtwoord, via het portaal.</p>
+      <div class="help-tip" style="background:#F0F7F3;border-color:#1A6B4A;color:#2D5A3D"><strong>Toegang:</strong> enkel via MijnDigiKAntoor. Afmelden doe je via het portaal.</div>
+      <h4>Drie modules</h4>
+      <ul>
+        <li><strong>Snelle aangifte:</strong> kort incident snel melden</li>
+        <li><strong>Uitgebreide melding:</strong> volledig formulier met context, betrokkenen en opvolging</li>
+        <li><strong>Overzicht:</strong> alle meldingen bekijken (directie/zorgcoördinator)</li>
+      </ul>
+      <h4>Vertrouwelijkheid</h4>
+      <p>Meldingen zijn enkel zichtbaar voor de directie en zorgcoördinator van de betrokken school. Personeelsleden zien enkel hun eigen meldingen.</p></div><div class="help-section" id="help-aangifte">
+      <h3 style="color:#1A6B4A">&#9889; Snelle aangifte</h3>
+      <p>Gebruik de snelle aangifte voor eenvoudige incidenten die je snel wil registreren.</p>
+      <div class="help-step"><div class="help-step-nr" style="background:#1A6B4A">1</div><div class="help-step-txt">Kies het type incident (agressie, pesten, accident, ...)</div></div>
+      <div class="help-step"><div class="help-step-nr" style="background:#1A6B4A">2</div><div class="help-step-txt">Vul de datum en een korte omschrijving in</div></div>
+      <div class="help-step"><div class="help-step-nr" style="background:#1A6B4A">3</div><div class="help-step-txt">Geef betrokkenen aan (optioneel)</div></div>
+      <div class="help-step"><div class="help-step-nr" style="background:#1A6B4A">4</div><div class="help-step-txt">Dien in — de melding wordt opgeslagen en de directie verwittigd</div></div>
+      <div class="help-tip" style="background:#F0F7F3;border-color:#1A6B4A;color:#2D5A3D"><strong>Tip:</strong> voor incidenten met ernstige gevolgen of meerdere betrokkenen gebruik je de <em>Uitgebreide melding</em>.</div></div><div class="help-section" id="help-modules">
+      <h3 style="color:#1A6B4A">&#128196; Uitgebreide melding</h3>
+      <p>De uitgebreide melding laat toe een incident grondig te documenteren met alle relevante informatie voor opvolging en eventuele externe rapportage.</p>
+      <h4>Beschikbare velden</h4>
+      <ul>
+        <li>Type en ernst van het incident</li>
+        <li>Datum, tijdstip en locatie</li>
+        <li>Betrokken leerlingen en/of personeelsleden</li>
+        <li>Getuigen</li>
+        <li>Beschrijving en onmiddellijke maatregelen</li>
+        <li>Vervolgacties en verantwoordelijke</li>
+      </ul>
+      <div class="help-tip" style="background:#F0F7F3;border-color:#1A6B4A;color:#2D5A3D"><strong>Bewaar als concept:</strong> je kan een uitgebreide melding opslaan als concept en later verder aanvullen.</div></div><div class="help-section" id="help-beheer">
+      <h3 style="color:#1A6B4A">&#9881; Voor directie en zorgcoördinator</h3>
+      <h4>Overzicht meldingen</h4>
+      <p>Via het tabblad <strong>Overzicht</strong> zie je alle meldingen van jouw school, gefilterd op type, periode of status.</p>
+      <h4>Opvolging</h4>
+      <p>Klik op een melding om de details te bekijken, een opvolgingsnotitie toe te voegen of de status te wijzigen (nieuw → in behandeling → afgehandeld).</p>
+      <h4>Exporteren</h4>
+      <p>Het overzicht kan geëxporteerd worden voor externe rapportage (CLB, pedagogische begeleiding, ...).</p></div></div>
+  <div class="help-footer">Scholengroep Londerzeel BaO — ict@centrumschool.londerzeel.be</div>
+</div>
+
 </body>
 </html>
